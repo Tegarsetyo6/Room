@@ -1,6 +1,8 @@
 package id.ac.ub.room;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.view.View;
@@ -10,11 +12,13 @@ import android.widget.TextView;
 
 import java.util.List;
 
+
 public class MainActivity extends AppCompatActivity {
     Button bt1;
     Button bt2;
     EditText et1;
-    TextView tv1;
+    RecyclerView recyclerView;
+    ItemAdapter itemAdapter;
     private AppDatabase appDb;
     int i = 0;
 
@@ -22,11 +26,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        appDb = AppDatabase.getInstance(getApplicationContext());
+        appDb = AppDatabase.getInstance(this);
         bt1 = findViewById(R.id.bt1);
         bt2 = findViewById(R.id.bt2);
-        tv1 = findViewById(R.id.tv1);
         et1 = findViewById(R.id.et1);
+        recyclerView = findViewById(R.id.recyclerView); // Inisialisasi Recycler View
+        recyclerView.setLayoutManager(new LinearLayoutManager(this)); // Atur jenis layout
+
         bt1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -42,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+
         bt2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -49,14 +56,21 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         List<Item> list = appDb.itemDao().getAll();
-                        String s = "";
-                        for (Item item : list) {
-                            s = s + item.getJudul() + '\n';
-                        }
-                        tv1.setText(s);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (itemAdapter == null) {
+                                    itemAdapter = new ItemAdapter(MainActivity.this, list);
+                                    recyclerView.setAdapter(itemAdapter);
+                                } else {
+                                    itemAdapter.notifyDataSetChanged(); // Jika adapter sudah ada, gunakan ini untuk memperbarui data
+                                }
+                            }
+                        });
                     }
                 });
             }
         });
+
     }
 }
